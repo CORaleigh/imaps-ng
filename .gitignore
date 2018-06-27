@@ -2,3 +2,10 @@ node_modules
 .tmp
 .sass-cache
 bower_components
+/dist
+bower.json
+Gruntfile.js
+/app
+package.json
+proxy.config
+/test
