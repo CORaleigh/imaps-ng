@@ -8,39 +8,70 @@ angular.module('imapsNgApp')
 			var formatAccountInfo = function (account) {
 				$scope.accountInfo = [];
 				$scope.tabChanged(false);
-				$scope.pin = account.pin;
-				$scope.reid = account.reid;
-				$rootScope.$broadcast('pinUpdate', account.pin);
+				$scope.pin = account.PIN_NUM;
+				$scope.reid = account.REID;
+				$rootScope.$broadcast('pinUpdate', account.attributes.PIN_NUM);
+				var currencyFields = ['LAND_VAL','BLDG_VAL','TOTAL_VALUE_ASSD','TOTSALPRICE'];
+				var dateFields = ['DEED_DATE', 'SALE_DATE'];
+				var date = null;
 				angular.forEach($scope.fields, function (f) {
-				 	if (f.type === 'currency') {
-				 		account[f.field] = $filter('currency')(account[f.field], '$', 0);
-				 	}
-					$scope.accountInfo.push({field: f.alias, value: account[f.field]});
+					if (f.name != "OBJECTID") {
+						if (f.type === 'esriFieldTypeDouble') {
+							account.attributes[f.name] = Math.round(account.attributes[f.name] * 100) / 100;
+						}
+						if (currencyFields.indexOf(f.name) > -1) {
+							account.attributes[f.name] = $filter('currency')(account.attributes[f.name], '$', 0);
+						}
+						if (dateFields.indexOf(f.name) > -1) {
+						   if (account.attributes[f.name]) {
+							   date = new Date(account.attributes[f.name]);
+							   account.attributes[f.name] = date.getMonth()+1+'/'+date.getDate()+'/'+date.getFullYear();
+						   }
+						}
+					    if (!account.attributes[f.name]) {
+							account.attributes[f.name] = '';
+						}
+
+					   $scope.accountInfo.push({field: f.alias, value: account.attributes[f.name]});
+					}
 				});
 				$rootScope.accountInfo = $scope.accountInfo;
+				setGrid();
 			};
 			var getSepticPermits = function (pin) {
 				property.getSepticPermits(pin).then(function (data) {
-					if (data.SepticPermits.length > 0) {
-						angular.forEach(data.SepticPermits, function (permit) {
-							$scope.accountInfo.push({field: 'Septic Permit', value: permit.permitNumber});
-						});
-/*						$timeout(function() {
-							$scope.infoGrid.data = $scope.accountInfo;
-						});	*/
+					if (data.features) {
+						if (data.features.length > 0) {
+							$scope.accountInfo.push({field: 'Septic Permit', value: pin});
+						}
 					}
 					getWellSamples(pin);
 				});
 			};
 			var getWellSamples = function (pin) {
-				property.getWellResults(pin).then(function (data) {
-					if (data.WellResults.length > 0) {
-						$scope.accountInfo.push({field: 'Well Samples', value: pin});
+				
+				 property.getWellResults(pin).then(function (data) {
+					if (data.features) {
+						if (data.features.length > 0) {
+							$scope.accountInfo.push({field: 'Well Samples', value: pin});
+						}
+						$timeout(function() {
+							
+							$scope.infoGrid.data = $scope.accountInfo;
+							setGrid();
+						});						
 					}
-					$timeout(function() {
-						$scope.infoGrid.data = $scope.accountInfo;
-					});
 				});
+				// property.getWellResults(pin).then(function (data) {
+				// 	if (data.WellResults) {
+				// 		if (data.WellResults.length > 0) {
+				// 			$scope.accountInfo.push({field: 'Well Samples', value: pin});
+				// 		}
+				// 		$timeout(function() {
+				// 			$scope.infoGrid.data = $scope.accountInfo;
+				// 		});
+				// 	}
+				// });
 			};
 			if ($scope.account && !$scope.accountInfo) {
 				formatAccountInfo($scope.account);
@@ -48,13 +79,12 @@ angular.module('imapsNgApp')
 			$scope.$on('accountSelected', function (e, account) {
 				$rootScope.account = account;
 				formatAccountInfo(account);
-				if (account.city === 'RALEIGH')
+				if (account.attributes.CITY_DECODE === 'RALEIGH')
 				{
-					//$scope.accountInfo.push({field: 'Crime', value: 'http://www.crimemapping.com/Map/Find/' + account.siteAddress + "," + account.city + ",NC"});
-					$scope.accountInfo.push({field: 'Crime', value: 'https://maps.raleighnc.gov/crime?pin=' + account.pin});					
+					$scope.accountInfo.push({field: 'Crime', value: 'https://www.crimemapping.com/map/location/' + account.attributes.SITE_ADDRESS + "," + account.attributes.CITY_DECODE + ",NC"});
 				}
-				if (account.pin) {
-					getSepticPermits(account.pin);
+				if (account.attributes.PIN_NUM) { 
+					getSepticPermits(account.attributes.PIN_NUM);
 				}
 				$("#infoGrid .ngReactGridViewPort").css({'min-height': $('.tabcontainer').height() - 30 + 'px', 'max-height': $('.tabcontainer').height() - 30 + 'px'});
 			});
@@ -78,9 +108,9 @@ angular.module('imapsNgApp')
 							sort: false,
 							render: function (row) {
 								if (row.field === "Septic Permit") {
-									return React.DOM.a({className: 'ps-link', href:"http://gisasp2.wakegov.com/imaps/RequestedPermit.aspx?permit=" + row.value, target:"_blank"}, row.value + " ", React.DOM.span({className: 'glyphicon glyphicon-new-window'}));
+									return React.DOM.a({className: 'ps-link', href:"https://maps.wakegov.com/septic/index.html#/?pin=" + row.value, target:"_blank"}, "View ", React.DOM.span({className: 'glyphicon glyphicon-new-window'}));
 								} else if (row.field === "Well Samples") {
-									return React.DOM.a({className: 'ps-link', href:"http://justingreco.github.io/water-analysis/app/index.html#/?pin=" + row.value, target:"_blank"}, "View ", React.DOM.span({className: 'glyphicon glyphicon-new-window'}));
+									return React.DOM.a({className: 'ps-link', href:"https://maps.wakegov.com/water-analysis/index.html#/?pin=" + row.value, target:"_blank"}, "View ", React.DOM.span({className: 'glyphicon glyphicon-new-window'}));
 								} else if (row.field === "Crime") {
 									return React.DOM.a({className: 'ps-link', href: row.value, target:"_blank"}, "View ", React.DOM.span({className: 'glyphicon glyphicon-new-window'}));
 								}

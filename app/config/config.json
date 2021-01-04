@@ -1,5 +1,9 @@
 {
 	"title": "iMAPS",
+	"alert": {
+		"show": false,
+		"message": "Wake County will undergo database maintenance, December 19 from 6pm to 8pm.  iMAPS may be unavailable or not function properly during this time."
+	},
 	"map": {
 		"id": "0757b2fd0e6f44dd8d8fefbfc09aa8eb",
 		"geometryServiceUrl": "https://maps.raleighnc.gov/arcgis/rest/services/Utilities/Geometry/GeometryServer",
@@ -11,7 +15,7 @@
 				"layers": [
 				{
 					"name": "Base Map",
-					"url": "https://maps.raleighnc.gov/arcgis/rest/services/BaseMapMobile/MapServer",
+					"url": "https://maps.raleighnc.gov/arcgis/rest/services/BaseMap/MapServer",
 					"labels": true,
 					"tiled": true,
 					"id": "base-map",
@@ -19,7 +23,7 @@
 				},
 				{
 					"name": "Base Map Basic",
-					"url": "http://maps.wakegov.com/arcgis/rest/services/BaseMapSimple/MapServer",
+					"url": "https://maps.raleighnc.gov/arcgis/rest/services/BaseMapSimple/MapServer",
 					"labels": false,
 					"tiled": false,
 					"id": "base-map-basic",
@@ -29,18 +33,36 @@
 			"images" : {
 				"thumbnail": "aerials.png",
 				"layers": [
+					{
+						"name": "2017",
+						"url": "https://maps.wakegov.com/arcgis/rest/services/Imagery/Imagery_2017/MapServer",
+						"labels": false,
+						"tiled": true,
+						"county": true,
+						"id": "orthos-2017",
+						"tone": "dark"
+					},							
+					{
+						"name": "2016",
+						"url": "https://maps.raleighnc.gov/images/rest/services/Orthos2016/ImageServer",
+						"labels": false,
+						"tiled": true,
+						"county": false,
+						"id": "orthos-2016",
+						"tone": "dark"
+					},					
 				{
 					"name": "2015",
-					"url": "https://maps.raleighnc.gov/arcgis/rest/services/Orthos10/Orthos2015/ImageServer",
+					"url": "https://maps.raleighnc.gov/images/rest/services/Orthos2015/ImageServer",
 					"labels": false,
 					"tiled": true,
 					"county": false,
 					"id": "orthos-2015",
 					"tone": "dark"
-				},				
+				},
 				{
 					"name": "2014",
-					"url": "https://maps.raleighnc.gov/arcgis/rest/services/Orthos10/Orthos2014/ImageServer",
+					"url": "https://maps.raleighnc.gov/images/rest/services/Orthos2014/ImageServer",
 					"labels": false,
 					"tiled": true,
 					"county": false,
@@ -49,7 +71,7 @@
 				},
 				{
 					"name": "2013",
-					"url": "https://maps.raleighnc.gov/arcgis/rest/services/Orthos10/Orthos2013/ImageServer",
+					"url": "https://maps.raleighnc.gov/images/rest/services/Orthos2013/ImageServer",
 					"labels": false,
 					"tiled": true,
 					"county": true,
@@ -58,7 +80,7 @@
 				},
 				{
 					"name": "2012",
-					"url": "https://maps.raleighnc.gov/arcgis/rest/services/Orthos10/Orthos2012/ImageServer",
+					"url": "https://maps.raleighnc.gov/images/rest/services/Orthos2012/ImageServer",
 					"labels": false,
 					"tiled": true,
 					"county": false,
@@ -67,7 +89,7 @@
 				},
 				{
 					"name": "2011",
-					"url": "https://maps.raleighnc.gov/arcgis/rest/services/Orthos10/Orthos2011/ImageServer",
+					"url": "https://maps.raleighnc.gov/images/rest/services/Orthos2011/ImageServer",
 					"labels": false,
 					"tiled": true,
 					"county": false,
@@ -76,7 +98,7 @@
 				},
 				{
 					"name": "2010",
-					"url": "https://maps.raleighnc.gov/arcgis/rest/services/Orthos10/Orthos2010/ImageServer",
+					"url": "https://maps.raleighnc.gov/images/rest/services/Orthos2010/ImageServer",
 					"labels": false,
 					"tiled": true,
 					"county": true,
@@ -85,7 +107,7 @@
 				},
 				{
 					"name": "2009",
-					"url": "https://maps.raleighnc.gov/arcgis/rest/services/Orthos10/Orthos2009/ImageServer",
+					"url": "https://maps.raleighnc.gov/images/rest/services/Orthos2009/ImageServer",
 					"labels": false,
 					"tiled": true,
 					"county": false,
@@ -94,7 +116,7 @@
 				},
 				{
 					"name": "2008",
-					"url": "https://maps.raleighnc.gov/arcgis/rest/services/Orthos10/Orthos2008/ImageServer",
+					"url": "https://maps.raleighnc.gov/images/rest/services/Orthos2008/ImageServer",
 					"labels": false,
 					"tiled": true,
 					"county": false,
@@ -103,7 +125,7 @@
 				},
 				{
 					"name": "2007",
-					"url": "https://maps.raleighnc.gov/arcgis/rest/services/Orthos10/Orthos2007/ImageServer",
+					"url": "https://maps.raleighnc.gov/images/rest/services/Orthos2007/ImageServer",
 					"labels": false,
 					"tiled": true,
 					"county": false,
@@ -112,7 +134,7 @@
 				},
 				{
 					"name": "2006",
-					"url": "https://maps.raleighnc.gov/arcgis/rest/services/Orthos10/Orthos2006/ImageServer",
+					"url": "https://maps.raleighnc.gov/images/rest/services/Orthos2006/ImageServer",
 					"labels": false,
 					"tiled": true,
 					"county": false,
@@ -121,7 +143,7 @@
 				},
 				{
 					"name": "2005",
-					"url": "https://maps.raleighnc.gov/arcgis/rest/services/Orthos10/Orthos2005/ImageServer",
+					"url": "https://maps.raleighnc.gov/images/rest/services/Orthos2005/ImageServer",
 					"labels": false,
 					"tiled": true,
 					"county": true,
@@ -130,7 +152,7 @@
 				},
 				{
 					"name": "2004",
-					"url": "https://maps.raleighnc.gov/arcgis/rest/services/Orthos10/Orthos2004/ImageServer",
+					"url": "https://maps.raleighnc.gov/images/rest/services/Orthos2004/ImageServer",
 					"labels": false,
 					"tiled": true,
 					"county": false,
@@ -139,7 +161,7 @@
 				},
 				{
 					"name": "2002",
-					"url": "https://maps.raleighnc.gov/arcgis/rest/services/Orthos10/Orthos2002/ImageServer",
+					"url": "https://maps.raleighnc.gov/images/rest/services/Orthos2002/ImageServer",
 					"labels": false,
 					"tiled": true,
 					"county": false,
@@ -148,7 +170,7 @@
 				},
 				{
 					"name": "1999",
-					"url": "https://maps.raleighnc.gov/arcgis/rest/services/Orthos10/Orthos1999/ImageServer",
+					"url": "https://maps.raleighnc.gov/images/rest/services/Orthos1999/ImageServer",
 					"labels": false,
 					"tiled": true,
 					"county": true,
@@ -157,7 +179,7 @@
 				},
 				{
 					"name": "1988",
-					"url": "https://maps.raleighnc.gov/arcgis/rest/services/Orthos10/Orthos1988/ImageServer",
+					"url": "https://maps.raleighnc.gov/images/rest/services/Orthos1988/ImageServer",
 					"labels": false,
 					"tiled": true,
 					"county": true,
@@ -166,7 +188,7 @@
 				},
 				{
 					"name": "1981",
-					"url": "https://maps.raleighnc.gov/arcgis/rest/services/Orthos10/Orthos1981/ImageServer",
+					"url": "https://maps.raleighnc.gov/images/rest/services/Orthos1981/ImageServer",
 					"labels": false,
 					"tiled": true,
 					"county": true,
@@ -181,7 +203,7 @@
 			{"label": "Disclaimer", "click": true, "items":
 				[
 				]
-			},		
+			},
 			{"label": "About", "click": true, "items":
 				[
 
@@ -203,6 +225,7 @@
 				[
 					{"label": "Raleigh Open GIS Data", "href": "http://data.ral.opendata.arcgis.com/"},
 					{"label": "Wake Open Data", "href": "http://data.wake.opendata.arcgis.com/"},
+					{"label": "Wake County GIS Downloads", "href": "http://www.wakegov.com/gis/services/pages/data.aspx"},
 					{"label": "Raleigh Open Data", "href": "https://data.raleighnc.gov/"}
 				]
 			},
@@ -210,7 +233,10 @@
 				[
 					{"label": "Help", "href": "http://maps.wakegov.com/imaps/iMAPShelp.pdf"},
 					{"label": "Legend", "href": "http://maps.wakegov.com/imaps/iMAPSlegend.pdf"},
-					{"label": "Electoral Quickstart", "href": "http://maps.wakegov.com/imaps/iMAPSelectoral.pdf"}
+					{"label": "Electoral Quickstart", "href": "http://maps.wakegov.com/imaps/iMAPSelectoral.pdf"},
+					{"label": "Appraisal Quickstart", "href": "http://maps.wakegov.com/imaps/iMAPSAppraisal.pdf"},
+					{"label": "Mailing Labels Guide", "href": "http://maps.wakegov.com/imaps/iMAPSmailinglabels.pdf"},					
+					{"label": "Clear Storage", "click": true}
 				]
 			}
 		]
@@ -221,20 +247,20 @@
 		},
 		"export": {
 			"url": "https://maps.raleighnc.gov/arcgis/rest/services/Utilities/PrintingTools/GPServer/Export%20Web%20Map%20Task"
-		},		
-		"bookmarks": 
+		},
+		"bookmarks":
 			[
 				{
 					"name":"Downtown Raleigh",
 					"extent":{
 						"xmin":2104769,
-						
+
 						"ymin":736771,
-						
+
 						"xmax":2109252,
-						
+
 						"ymax":739663,
-						
+
 						"spatialReference":
 							{
 								"wkid":2264
@@ -253,7 +279,7 @@
 								"wkid":102719
 							}
 					}
-				},				
+				},
 				{
 					"name":"Cary",
 					"extent":{
@@ -267,7 +293,7 @@
 							}
 					}
 
-				},	
+				},
 				{
 					"name":"Fuquay Varina",
 					"extent":{
@@ -293,7 +319,7 @@
 								"wkid":102719
 							}
 					}
-				},										
+				},
 				{
 					"name":"Holly Springs",
 					"extent":{
@@ -361,7 +387,7 @@
 								"wkid":102719
 							}
 					}
-				},									
+				},
 				{
 					"name":"Zebulon",
 					"extent":{
@@ -414,8 +440,8 @@
                         "layerId": 6
                     },
                     {
-                        "title": "Raleigh Council District [DISTRICT]",
-                        "labels": "<a class='ps-link' href='http://www.raleighnc.gov/home/content/BoardsCommissions/Articles/CityCouncil.html' target='_blank'>[NAME] <span class='glyphicon glyphicon-new-window'></span></a>",
+                        "title": "Raleigh Council District [COUNCIL_DIST]",
+                        "labels": "<a class='ps-link' href='http://www.raleighnc.gov/home/content/BoardsCommissions/Articles/CityCouncil.html' target='_blank'>[COUNCIL_PERSON] <span class='glyphicon glyphicon-new-window'></span></a>",
                         "layerId": 7
                     },
                     {
@@ -436,11 +462,11 @@
                         "layerId": 12
                     },
                     {"title": "Cary Zoning",
-                        "labels": "[NAME]",
+                        "labels": "[CLASS]",
                         "layerId": 13
                     },
                     {"title": "County Zoning",
-                        "labels": "[CLASS]",
+                        "labels": "[Class]",
                         "layerId": 14
                     },
                     {"title": "Fuquay-Varina Zoning",
@@ -522,35 +548,35 @@
                         "layerId": 33
                     },{
                         "title": "Bi-Weekly Recycling Collection",
-                        "labels": "Collection Day: [Collection Day];Recycling Week: <a class='ps-link' href='http://www.raleighnc.gov/content/SolidWaste/Documents/Calendars/[Collection Day][WEEK].pdf' target='_blank'>[WEEK] <span class='glyphicon glyphicon-new-window'></span></a>",
-                        "layerId": 34
+                        "labels": "Collection Day: [Collection Day];Recycling Week: <a class='ps-link' href='http://www.raleighnc.gov/content/SolidWaste/Documents/Calendars/[Collection Day][Recycling Week].pdf' target='_blank'>[Recycling Week] <span class='glyphicon glyphicon-new-window'></span></a>",
+                        "layerId": 33
                     }
                 ]
             },{"title": "Public Safety",
                 "services": [
                     {"title": "Sheriff Zone",
-                    "labels": "[DISTRICT]",
+                    "labels": "[NAME]",
                     "layerId": 36},
-                    {"title": "Raleigh Police Beat",
-                    "labels": "[Name]",
+                    {"title": "Raleigh Police Distict",
+                    "labels": "[DISTRICT]",
                     "layerId": 37},
                     {"title": "Garner Police Beat",
-                    "labels": "[Name]",
+                    "labels": "[NAME]",
                     "layerId": 38},
                     {"title": "Fire Insurance District",
-                    "labels": "[District]",
+                    "labels": "[DISTRICT]",
                     "layerId": 39},
                     {"title": "County Fire Response District",
-                    "labels": "[District]",
+                    "labels": "[DISTRICT]",
                     "layerId": 40},
                     {"title": "Raleigh Fire Response District",
-                    "labels": "[District]",
+                    "labels": "[DUE_1]",
                     "layerId": 41},
                     {"title": "EMS Franchise District",
-                    "labels": "[District:proper]",
+                    "labels": "[DISTRICT:proper]",
                     "layerId": 42},
                     {"title": "EMS Response District",
-                    "labels": "[District:proper]",
+                    "labels": "[DISTRICT:proper]",
                     "layerId": 43}
                 ]
             },{"title": "Environmental",
@@ -573,12 +599,11 @@
                 ]
             },{"title": "City of Raleigh Assessments",
                 "services": [
-                    {"title": "Assement Liens",
+                    {"title": "Assessment Liens",
                     "labels": "Account #: <a class='ps-link' href='http://www.raleighnc.gov/home/content/Finance/Articles/OtherPaymentInformatio.html' target='_blank'>[Account] <span class='glyphicon glyphicon-new-window'></span></a>;Type: [Type];Status: [Status];Confirmed: [Confirmed Date];",
                     "layerId": 52}
                 ]
             }
         ]
     }
-
 }

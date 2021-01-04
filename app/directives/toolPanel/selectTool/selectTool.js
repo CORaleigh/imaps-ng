@@ -26,22 +26,27 @@ angular.module('imapsNgApp')
 			};
 			var searchForProperties = function (geometry, type, wkid) {
 				property.getPropertiesByGeometry(geometry, type, 0, wkid).then(function (result) {
-					property.getPropertiesByGeometry(geometry, type, 1, wkid).then(function (result2) { 
-						result.features = result.features.concat(result2.features);
+					//property.getPropertiesByGeometry(geometry, type, 1, wkid).then(function (result2) { 
+						result.features = result.features;//.concat(result2.features);
 						var pins = [];
 						angular.forEach(result.features, function (feature) {
 							pins.push(feature.attributes.PIN_NUM);
 						});
+						$scope.selectionSingle.clear();
+						$scope.selectionMultiple.clear();
 						property.getRealEstate('pin', pins).then(function (data) {
-							$scope.account = null;
-							$scope.$parent.account = null;
-							$scope.geometry = null;
-							$scope.fields = data.Fields;
-							$scope.accounts = data.Accounts;
-							$rootScope.zoomTo = false;
-							$rootScope.$broadcast('accountUpdate', data.Accounts);
+							if (data) {
+
+								$scope.account = null;
+							   $scope.$parent.account = null;
+							   $scope.geometry = null;
+							   $scope.fields = data.fields;
+							   $scope.accounts = data.features;
+							   $rootScope.zoomTo = false;
+							   $rootScope.$broadcast('accountUpdate', data.features);
+							}
 						});
-					});
+					//});
 				});
 			}
 			require(['esri/toolbars/draw', 'dojo/on'], function (Draw, on) {

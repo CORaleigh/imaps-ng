@@ -42,10 +42,19 @@ angular.module('imapsNgApp')
 								retVal = true;
 							}
 						}
-					}					
+					}
 				}
 
 				return retVal;
+			};
+
+			$scope.clearLayers = function (layers) {
+				for (var i = 0; i < layers.length; i++) {
+					if (layers[i].title != 'Parcels' && layers[i].title.indexOf('[hidden]') === -1) {
+						$scope.map.getLayer(layers[i].id).setVisibility(false);
+						layers[i].visibility = false;
+					}
+				}
 			};
 
 			$scope.layerToggle = function (layer, webmap) {
@@ -89,15 +98,17 @@ angular.module('imapsNgApp')
 /*		  		require(['esri/geometry/Extent'], function (Extent){
 					$scope.map.setExtent(new Extent(layer.resourceInfo.initialExtent), true);
 		  		});*/
+				  console.log($scope.map.getScale());
+				  console.log(layer.resourceInfo.minScale);
 	  			if ($scope.map.getScale() > layer.resourceInfo.minScale) {
 					$scope.map.setScale(layer.resourceInfo.minScale);
-				}				
+				}
 		  	};
 		  	$scope.zoomToSubLayer = function (sublayer) {
 	  			if ($scope.map.getScale() > sublayer.minScale) {
 					$scope.map.setScale(sublayer.minScale);
 				}
-		  	};	
+		  	};
 
 		},
 		link: function (scope, element, attrs) {

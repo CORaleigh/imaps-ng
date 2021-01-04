@@ -7,6 +7,32 @@ angular.module('imapsNgApp')
 			$scope.resultHeader = [];
 			$scope.accounts = [];
 				$scope.$on('accountUpdate', function (e, accounts) {
+					
+					if (!accounts) {
+						accounts = [];
+					}
+					$scope.accountExports = [];
+					var date = null;
+
+					accounts.forEach(function(account) { 
+						account.attributes.PIN_FULL  = account.attributes.PIN_NUM;
+						$scope.fields.forEach(function (f) {
+							if (f.type === 'esriFieldTypeDate' && account.attributes[f.name]) {
+								date = new Date(account.attributes[f.name]);
+								account.attributes[f.name] = date.getMonth()+1+'/'+date.getDate()+'/'+date.getFullYear();
+							}
+							if (f.type === 'esriFieldTypeDouble' && account.attributes[f.name]) {
+								account.attributes[f.name] = Math.round(account.attributes[f.name] * 100) / 100;
+							} 		
+							if (f.name === 'PIN_EXT' && account.attributes['PIN_EXT']) {
+								if (account.attributes['PIN_EXT'] != '000' ) {
+									account.attributes.PIN_FULL = account.attributes.PIN_NUM + ' ' + account.attributes.PIN_EXT;
+
+								}
+							}			
+						});
+						$scope.accountExports.push(account.attributes);
+					});
 					$scope.accounts = accounts;
 					$scope.resultGrid.data = accounts;
 					$scope.resultHeader = [];
@@ -25,15 +51,15 @@ angular.module('imapsNgApp')
 			  	height: $('.tabcontainer').height() ,
 			  	columnDefs: [
 			  		{
-			  			field: 'siteAddress',
+			  			field: 'attributes.SITE_ADDRESS',
 			  			displayName: 'Address'
 			  		},
 			  		{
-			  			field: 'owner',
+			  			field: 'attributes.OWNER',
 			  			displayName: 'Owner'
 			  		},
 			  		{
-			  			field: 'pin',
+			  			field: 'attributes.PIN_FULL',
 			  			displayName: 'PIN'
 			  		}
 			  	],

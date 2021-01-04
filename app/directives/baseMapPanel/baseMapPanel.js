@@ -4,19 +4,26 @@ angular.module('imapsNgApp')
 		templateUrl: 'directives/baseMapPanel/baseMapPanel.html',
 		restrict: 'E',
 		controller: function ($scope, $rootScope, $filter, $analytics) {
+			$scope.labels = {checked: true};
+			$scope.baseMapPanel = {height: 180};
 			var baseloaded = false;
+			var previousBaseId = "";
+			$scope.blend = {opacity: 1, checked: false};
 			$scope.insideRaleigh = true;
 			$rootScope.mapsChecked = false;
 			$scope.basemapType = 'streets';
+
 			$rootScope.$watch('config', function (config) {
 				if (config) {
 					$scope.basemap = config.map.basemaps.streets.layers[0];
 					$scope.streetMap = $scope.basemap;
+
 				}
 			});
 			$rootScope.$watch('mapsChecked', function (checked) {
 				$scope.mapsChecked = checked;
 			});
+
 			$scope.showAerial = function (layer) {
 				return layer.county && !$scope.insideRaleigh || $scope.insideRaleigh;
 			}
@@ -86,6 +93,7 @@ angular.module('imapsNgApp')
 								$scope.imageMap = $scope.basemap;
 							}
 						}
+						
 					}
 				}
 				$scope.basemapChanged($scope.basemap, type);
@@ -113,44 +121,109 @@ angular.module('imapsNgApp')
 							var renderer = SimpleRenderer(fill);
 							options.renderer = renderer;
 							optionsArray[0] = options;
-							optionsArray[1] = options;	
-							layer.setLayerDrawingOptions(optionsArray);					
+							optionsArray[1] = options;
+							layer.setLayerDrawingOptions(optionsArray);
 						}
 					}
 				});
 			};*/
-			$scope.basemapChanged = function (basemap, basemapType, manual) {
-				$analytics.eventTrack('Changed', {  category: 'Basemaps', label: basemap.id });
-				require(["esri/basemaps",], function (esriBasemaps) {
-					//setParcelColor();
-					angular.forEach($scope.map.layerIds, function (id) {
-						if (id.indexOf('Base') === 0 || id.indexOf('base') === 0) {
-							$scope.map.removeLayer($scope.map.getLayer(id));
-						}
-					});
-					angular.forEach($scope.map.basemapLayerIds, function (id) {
-						//if (id.indexOf('Base') === 0) {
-							$scope.map.removeLayer($scope.map.getLayer(id));
-						//}
-					});
-					$scope.map.setBasemap(basemap.id);
-					if (basemapType === 'streets') {
-						$scope.streetMap = basemap;
-					} else if (basemapType === 'images') {
-						$scope.imageMap = basemap;
+			var setPanelHeight = function (basemap, basemapType) {
+				if (basemapType === 'streets') {
+					$scope.streetMap = basemap;
+					$scope.baseMapPanel.height = 180;
+					if (base) {
+						$scope.map.removeLayer(base);
 					}
-					$scope.webmap.itemInfo.itemData.baseMap = esriBasemaps[basemap.id];
 
-					if (basemap.county) {
-						$scope.lastWakeYear = basemap;
-						if (manual) {
-							$scope.lastRaleighYear = basemap;
+				} else if (basemapType === 'images') {
+					$scope.imageMap = basemap;
+					$scope.baseMapPanel.height = ($scope.blend.checked) ? 245 : 200;
+					if ($scope.blend.checked) {
+						if (base) {
+							$scope.map.removeLayer(base);
 						}
-					} else {
-						$scope.lastRaleighYear = basemap;
+						addBlendBaseMap();
 					}
+				}				
+			};
+			$scope.basemapChanged = function (basemap, basemapType, manual) {
+				if (previousBaseId != basemap.id) {
+					previousBaseId = basemap.id;
+					$analytics.eventTrack('Changed', {  category: 'Basemaps', label: basemap.id });
+					require(["esri/basemaps",], function (esriBasemaps) {
+						//setParcelColor();
+						angular.forEach($scope.map.layerIds, function (id) {
+							if (id.indexOf('Base') === 0 || id.indexOf('base') === 0) {
+								$scope.map.removeLayer($scope.map.getLayer(id));
+							}
+						});
+						angular.forEach($scope.map.basemapLayerIds, function (id) {
+							//if (id.indexOf('Base') === 0) {
+								$scope.map.removeLayer($scope.map.getLayer(id));
+							//}
+						});
+						//if (basemapType === 'images') {
+							$scope.checkInsideRaleigh($scope.raleighBounds, $scope.map.extent.getCenter());
+						//}
+
+						$scope.map.setBasemap(basemap.id);
+						setPanelHeight(basemap, basemapType);
+						
+						$scope.webmap.itemInfo.itemData.baseMap = esriBasemaps[basemap.id];
+						if (basemapType === 'images') {
+
+							if (basemap.county) {
+								$scope.lastWakeYear = basemap;
+								if (manual) {
+									$scope.lastRaleighYear = basemap;
+								}
+							} else {
+								$scope.lastRaleighYear = basemap;
+							}
+							
+						}
+					});
+				}
+			};
+			var base = null;
+			$scope.baseOpacityChanged = function () {
+				base.setOpacity(1 - $scope.blend.opacity);
+			};
+			var addBlendBaseMap = function () {
+				require(['esri/layers/ArcGISTiledMapServiceLayer'], function (ArcGISTiledMapServiceLayer) {
+					base = ArcGISTiledMapServiceLayer($scope.streetMap.url, {opacity: 1 - $scope.blend.opacity});
+					$scope.map.addLayer(base, $scope.map.basemapLayerIds.length);
 				});
-			}
+			};
+			$scope.blendChecked = function () {
+				if ($scope.blend.checked) {
+					addBlendBaseMap();
+					$scope.baseMapPanel.height = 245;
+				} else if (base) {
+					$scope.map.removeLayer(base);
+					$scope.baseMapPanel.height = 200;
+				}
+
+				$timeout(function () {
+					$scope.$broadcast('refreshSlider');
+				})
+			};
+			$scope.labelsChecked = function () {
+				if ($scope.map.basemapLayerIds.length > 1) {
+					var id = $scope.map.basemapLayerIds[1];
+					$scope.map.getLayer(id).setVisibility($scope.labels.checked);
+					if ($scope.map.getLayer("base1")) {
+						$scope.map.getLayer("base1").setVisibility($scope.labels.checked);
+					}
+				}
+			};
+			$rootScope.$on('mapLoaded', function () {
+				setPanelHeight($scope.basemap, $scope.basemapType);
+				$scope.map.on("basemap-change", function (current, previous) {
+					$scope.labelsChecked();
+				});				
+			});
+
 		}, link: function (scope, element, attr) {
 		}
 	}

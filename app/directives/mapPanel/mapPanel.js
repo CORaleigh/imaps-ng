@@ -3,7 +3,7 @@ angular.module('imapsNgApp')
 	return {
 		templateUrl: 'directives/mapPanel/mapPanel.html',
 		restrict: 'E',
-		controller: function ($scope, $rootScope, $timeout, property, localStorageService, $filter, mapUtils) {
+		controller: function ($scope, $rootScope, $timeout, property, localStorageService, $filter, mapUtils, $analytics) {
 			$scope.property = property;
 
 			var oldItemInfo = null;
@@ -14,10 +14,12 @@ angular.module('imapsNgApp')
 				cfpLoadingBar.complete();
 			};
 			var mapUnloaded = function () {
-				var storage = (($rootScope.configName ? $rootScope.configName + '_webmap' : 'imaps_webmap'));
-				localStorageService.set(storage, stringify($scope.webmap));//JSON.stringify(JSON.decycle($scope.webmap)));
+				if ($rootScope.keepStorage) {
+					var storage = (($rootScope.configName ? $rootScope.configName + '_webmap' : 'imaps_webmap'));
+					localStorageService.set(storage, stringify($scope.webmap));//JSON.stringify(JSON.decycle($scope.webmap)));
+				}
 			};
-			var checkInsideRaleigh = function (bounds, point) {
+			$scope.checkInsideRaleigh = function (bounds, point) {
 				require(["esri/geometry/Polygon"], function (Polygon) {
 					bounds = new Polygon(bounds);
 					var inside = bounds.contains(point);
@@ -32,14 +34,14 @@ angular.module('imapsNgApp')
 				var tr = spToDd(e.extent.xmax, e.extent.ymax);
 				$scope.webmap.itemInfo.item.extent = [ll.reverse(), tr.reverse()];
 				if ($scope.raleighBounds) {
-					checkInsideRaleigh($scope.raleighBounds, e.extent.getCenter());
+					$scope.checkInsideRaleigh($scope.raleighBounds, e.extent.getCenter());
 				}
 				$scope.scale = $scope.map.getScale();
 			};
 			var setRaleighBounds = function () {
 				mapUtils.loadRaleighBounds('data/raleigh.json').then(function (bounds) {
 					$scope.raleighBounds = bounds;
-					checkInsideRaleigh(bounds, $scope.map.extent.getCenter());
+					$scope.checkInsideRaleigh(bounds, $scope.map.extent.getCenter());
 				})
 			}
 
@@ -99,12 +101,14 @@ angular.module('imapsNgApp')
 					$(evt.node).attr('title', evt.graphic.attributes.SITE_ADDRESS+"<br/>" + evt.graphic.attributes.OWNER);
 					$(evt.node).attr('data-toggle', 'tooltip');
 					$(evt.node).tooltip({
-						'container': 'map-panel', 
+						'container': 'map-panel',
 						html: true,
 						placement: 'mouse',
 						trigger: 'hover'});
 				});
-
+				$scope.selectionMultiple.on("graphic-node-remove", function (evt) {
+					$(evt.node).tooltip('destroy');
+				});
 				$scope.map.on('pan', function (e) {
 					$('.tooltip').hide();
 				});
@@ -112,6 +116,9 @@ angular.module('imapsNgApp')
 				$scope.selectionMultiple.on("mouse-move", function (e) {
 					$('.tooltip').css('top', (e.clientY + 10) + 'px');
 					$('.tooltip').css('left', (e.clientX + 10) + 'px');
+				});
+				$scope.selectionMultiple.on("mouse-out", function (e) {
+					$('.tooltip').hide();
 				});
 
 				$scope.selectionSingle = new GraphicsLayer({id: 'selectedProperty'});
@@ -123,8 +130,8 @@ angular.module('imapsNgApp')
 
 			var webMapLoaded = function (response) {
 
-				require(["esri/layers/GraphicsLayer", "esri/basemaps", "esri/geometry/Extent", "esri/dijit/HomeButton", "esri/SpatialReference", "esri/dijit/LocateButton", "dojo/on"],
-				function (GraphicsLayer, esriBasemaps, Extent, HomeButton, SpatialReference, LocateButton, on) {
+				require(["esri/layers/GraphicsLayer", "esri/basemaps", "esri/geometry/Extent", "esri/dijit/HomeButton", "esri/SpatialReference", "esri/dijit/LocateButton", "esri/dijit/Scalebar", "dojo/on"],
+				function (GraphicsLayer, esriBasemaps, Extent, HomeButton, SpatialReference, LocateButton, Scalebar, on) {
 					if (oldItemInfo) {
 						response = compareVisibleLayers(response, oldItemInfo);
 					}
@@ -137,6 +144,13 @@ angular.module('imapsNgApp')
 						$scope.webmap = response;
 					}
 					$scope.map = response.map;
+
+					on($scope.map.infoWindow, 'set-features', function () {
+						var anchor = (($scope.map.infoWindow.location.y < $scope.map.extent.getCenter().y) ? "top" : "bottom") + "-" + (($scope.map.infoWindow.location.x < $scope.map.extent.getCenter().x) ? "right" : "left");
+						$scope.map.infoWindow.anchor = anchor;
+						$scope.map.infoWindow.offsetX = 10;
+						$scope.map.infoWindow.reposition();
+					});
 
 					setRaleighBounds();
 					addGraphicsLayers(GraphicsLayer);
@@ -153,6 +167,9 @@ angular.module('imapsNgApp')
 						if (!basemap.labels) {
 							baselayers.push({url: $scope.config.map.labels});
 						}
+						if (basemap.hillshade) {
+							baselayers.push({url: $scope.config.map.hillshade, opacity:0.2})
+						}						
 						var base = {
 							baseMapLayers: baselayers,
 							title: basemap.name
@@ -193,7 +210,9 @@ angular.module('imapsNgApp')
 
 					var home = new HomeButton({map: $scope.map, extent: new Extent(1948652, 608444, 2249012, 862044, new SpatialReference({wkid: 2264}))}, 'homeButton').startup();
 					var locate = new LocateButton({map: $scope.map, scale: 2400, highlightLocation: true}, 'locateButton').startup();
-
+					var scalebar = new Scalebar({
+          	map: $scope.map, scalebarUnit: "english"
+        	});
 				});
 			}
 
@@ -207,43 +226,54 @@ angular.module('imapsNgApp')
 						storedLayer  = storedLayer[0];
 						l.opacity = storedLayer.opacity;
 						l.visibility = storedLayer.visibility;
-					}					
+					}
 				});
 			};
 
 			$rootScope.$watch('config', function (config) {
 				if (config) {
 					$scope.config = config;
-					require(["esri/map", "esri/arcgis/utils", "esri/config", "esri/tasks/GeometryService", "dojo/domReady!"], function(Map, arcgisUtils, esriConfig, GeometryService) {
-						esriConfig.defaults.io.proxyUrl = "http://maps.raleighnc.gov/parklocator/proxy.ashx";
+					require(["esri/map", "esri/arcgis/utils", "esri/config", "esri/tasks/GeometryService", "esri/dijit/Popup", "dojo/dom-construct", "dojo/on", "dojo/domReady!"], function(Map, arcgisUtils, esriConfig, GeometryService, Popup, domConstruct, on) {
+						//esriConfig.defaults.io.proxyUrl = "http://maps.raleighnc.gov/parklocator/proxy.ashx";
 						esriConfig.defaults.io.alwaysUseProxy = false;
 						esriConfig.defaults.geometryService = new GeometryService("https://maps.raleighnc.gov/arcgis/rest/services/Utilities/Geometry/GeometryServer");
 						var input = config.map.id;
-						
+
 						var itemDeferred = arcgisUtils.getItem(config.map.id);
 
 						itemDeferred.addCallback(function (itemInfo) {
 							var input =  itemInfo;
 							var storage = (($rootScope.configName ? $rootScope.configName + '_webmap' : 'imaps_webmap'));
 							if (localStorageService.get(storage)) {
-								if (itemInfo.item.modified === localStorageService.get(storage).itemInfo.item.modified) {
-									var webmap = {};
-									webmap.item = localStorageService.get(storage).itemInfo.item;
-									webmap.itemData = localStorageService.get(storage).itemInfo.itemData;
-									input = webmap;
-								} else {
-									itemInfo.item.extent = localStorageService.get(storage).itemInfo.item.extent;
-									itemInfo.itemData.baseMap = localStorageService.get(storage).itemInfo.itemData.baseMap;
-									itemInfo = compareOpLayers(itemInfo, localStorageService.get(storage).itemInfo);
-									oldItemInfo = localStorageService.get(storage).itemInfo;
+								if (localStorageService.get(storage).itemInfo.item.modified < 1459986024523) {
 									localStorageService.remove(storage);
+								} else {
 
-								}		
+									if (itemInfo.item.modified === localStorageService.get(storage).itemInfo.item.modified) {
+										var webmap = {};
+										webmap.item = localStorageService.get(storage).itemInfo.item;
+										webmap.itemData = localStorageService.get(storage).itemInfo.itemData;
+										input = webmap;
+									} else {
+										itemInfo.item.extent = localStorageService.get(storage).itemInfo.item.extent;
+										itemInfo.itemData.baseMap = localStorageService.get(storage).itemInfo.itemData.baseMap;
+										itemInfo = compareOpLayers(itemInfo, localStorageService.get(storage).itemInfo);
+										oldItemInfo = localStorageService.get(storage).itemInfo;
+										localStorageService.remove(storage);
+
+									}
+								}
 							}
+							var popup = new Popup({}, domConstruct.create("div"));
+							on(popup, 'show', function (e) {
+								console.log($scope.map.infoWindow.anchor);
+								console.log(e);
+							});
 							arcgisUtils.createMap(input,"map", {
 								geometryServiceURL: "https://maps.raleighnc.gov/arcgis/rest/services/Utilities/Geometry/GeometryServer",
 								mapOptions: {fadeOnZoom: true,
 									logo: false,
+									//infoWindow: popup,
 									showAttribution: false,
 									sliderPosition: "bottom-left",
 									sliderOrientation: "horizontal",
@@ -257,14 +287,15 @@ angular.module('imapsNgApp')
 						});
 					}
 				});
+
 				var addGeometriesToMap = function (features, gl, color) {
 					require(["esri/graphic", "esri/graphicsUtils", "esri/SpatialReference"], function (Graphic, graphicsUtils, SpatialReference) {
+						$('.tooltip').hide();
 						$scope.map.reorderLayer($scope.bufferGraphics, $scope.map.layerIds.length - 4);
 						$scope.map.reorderLayer($scope.selectionMultiple, $scope.map.layerIds.length - 3);
 						$scope.map.reorderLayer($scope.selectionSingle, $scope.map.layerIds.length - 2);
 						var g = null;
 						gl.clear();
-						$scope.selectionSingle.clear();
 						if (features.length === 1) {
 							$scope.geometry = features[0].geometry;
 						}
@@ -285,28 +316,50 @@ angular.module('imapsNgApp')
 					});
 				};
 				$scope.$on('accountUpdate', function (e, accounts) {
-					var pins = [];
+					if (!accounts) {
+						accounts = [];
+					}
 					if (accounts.length > 0) {
-						angular.forEach(accounts, function (a) {
-							//pins.push("'" + a.pin + "'");
-							pins.push ("PIN_NUM = '" + a.pin + "'")
+						var where = "PIN_NUM IN (";
+						angular.forEach(accounts, function (a, i) {
+							if( a.attributes.PIN_NUM) {
+								where += "'" + a.attributes.PIN_NUM + "'";
+								if (i < accounts.length - 1) {
+									where += ","
+								} else {
+									where += ")";
+								}
+								
+							}
 						});
 						//$scope.property.getGeometryByPins("PIN_NUM in (" + pins.toString() + ")", $scope.config.map.wkid).then(function (data) {
-						$scope.property.getGeometryByPins(pins.toString().replace(/,/g, ' OR '), 0, $scope.config.map.wkid).then(function (data) {									
-							$scope.property.getGeometryByPins(pins.toString().replace(/,/g, ' OR '), 1, $scope.config.map.wkid).then(function (data2) {
-								addGeometriesToMap(data.features.concat(data2.features), $scope.selectionMultiple, [255,255,0]);
-							});
-							
-						});
+						//$scope.property.getGeometryByPins(pins.toString().replace(/,/g, ' OR '), 0, $scope.config.map.wkid).then(function (data) {
+							//$scope.property.getGeometryByPins(pins.toString().replace(/,/g, ' OR '), 1, $scope.config.map.wkid).then(function (data2) {
+							if (where != "PIN_NUM IN (") {
+								$scope.property.getGeometryByPins(where, 0, $scope.config.map.wkid).then(function (data) {
+									addGeometriesToMap(data.features, $scope.selectionMultiple, [255,255,0]);
+								});
+							}
+
+							//	addGeometriesToMap(data.features.concat(data2.features), $scope.selectionMultiple, [255,255,0]);
+							//});
+		
 					}
 				});
 				$scope.$on('pinUpdate', function (e, pin) {
 					$scope.property.getGeometryByPins("PIN_NUM = '" + pin + "'", 0, $scope.config.map.wkid ).then(function (data) {
-						$scope.property.getGeometryByPins("PIN_NUM = '" + pin + "'", 1, $scope.config.map.wkid ).then(function (data2) {
-							$timeout(function (){ 
-								addGeometriesToMap(data.features.concat(data2.features), $scope.selectionSingle, [255,0,0]);
+						//$scope.property.getGeometryByPins("PIN_NUM = '" + pin + "'", 1, $scope.config.map.wkid ).then(function (data2) {
+							$timeout(function (){
+								var features = data.features;//.concat(data2.features);
+								addGeometriesToMap(features, $scope.selectionSingle, [255,0,0]);
+								if (features.length === 1) {
+									require(["esri/geometry/Polygon"], function (Polygon) {
+										var pt = new Polygon(features[0].geometry).getCentroid();
+				 						$analytics.eventTrack('Property Selected', {category: 'centroid', label:spToDd(pt.x, pt.y)});
+				 					});
+								}
 							});
-						});
+						//})//;
 					});
 				});
 			},

@@ -11,11 +11,12 @@ angular.module('imapsNgApp')
   .controller('MainCtrl', function ($rootScope, $location, $timeout, config) {
   	$rootScope.checked = true;
     $rootScope.loading = true;
+   
     $timeout(function () {
         $('#loading').remove();
         $('#loadingBackground').remove();
         $rootScope.loading = false;
-    }, 10000);
+    }, 1000);
 
     var getBrowser = function () {
         var userAgent = navigator.userAgent.toLowerCase();
@@ -52,6 +53,7 @@ angular.module('imapsNgApp')
     var ua = navigator.userAgent.toLowerCase();
     var isAndroid = ua.indexOf("android") > -1; //&& ua.indexOf("mobile");
     if(isAndroid) {
+
         $timeout(function () {
           $('pageslide').addClass('android');
           $('toggle-button').addClass('android');

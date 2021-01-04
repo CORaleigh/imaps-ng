@@ -31,7 +31,7 @@ export-button:hover {
   top: 5px;
   right: 40px;
   z-index: 1;
-  cursor: pointer;  
+  cursor: pointer;
 }
 
 #propertyToggle .glyphicon:hover {
@@ -252,7 +252,7 @@ feedback textarea {
   top: 10px;
   height: 80px;
   left: -5px;
- 
+
 }
 /*hyperlinks*/
 a, a:active, a:visited:not(.btn):not(.navbar-brand):not(.menu-link) {
@@ -339,6 +339,29 @@ base-map-panel .collapse-panel.collapsed {
 .basemap-type {
   cursor: pointer;
 }
+base-map-panel .bubble {
+  display: none !important;
+}
+base-map-panel slider {
+  margin-top: 0.5em !important;
+  width: 100%;
+}
+
+.blend-label {
+  font-size: 10px;
+}
+
+.blend-label.high {
+  float: right;
+}
+
+.blend-label.low {
+  float: left;
+}
+
+input[type=checkbox] {
+  margin-right: 1em;
+}
 /*tool panel*/
 tool-panel {
   position: absolute;
@@ -387,23 +410,24 @@ select-tool .has-feedback > input{
   padding-left: 10px !important;
 }
 select-tool .form-control-feedback {
-  right: 50px; 
+  right: 50px;
   top: -4px;
 }
 .print-message {
     white-space: nowrap;
+    animation: marquee 4s linear;
     -webkit-animation: marquee 4s linear;
     margin-right: 10000px;
 }
 
 @-webkit-keyframes marquee {
     0%   {margin-right: 100%}
-    100$ {margin-right: 0}
+    100% {margin-right: 0}
 }
 
 @keyframes marquee {
     0%   {margin-right: 100%}
-    100$ {margin-right: 0}
+    100% {margin-right: 0}
 }
 /*draw tool*/
 draw-tool textarea {
@@ -697,7 +721,7 @@ slider {
   background-color: #eee;
   top: 0;
 }
-.pointer {
+slider .pointer {
   height: 100%;
   width: 20px;
   position: absolute;
@@ -714,6 +738,9 @@ slider {
 /*overwrite Esri classes*/
 .esriPopup .titleButton.maximize {
   display: none;
+}
+.esriPopup .contentPane {
+  max-height: 200px !important;
 }
 .arcgisSearch {
   position: absolute;
@@ -802,6 +829,23 @@ slider {
   height: 32px !important;
   width: 32px !important;
 }
+.esriScalebar {
+  left: 5px !important;
+  bottom: 50px !important;
+}
+.esriScalebarLabel {
+  font-size: 12px !important;
+  color: #222 !important;
+  text-shadow: 0 0 2px white;
+}
+.esriScalebarRuler {
+  height: 10px !important;
+  border-color: #222 !important;
+}
+.esriScalebarRulerBlock {
+  background-color: #222 !important;
+}
+
 .map .tooltip {
   width: 100px;
   word-wrap: break-word;
@@ -831,7 +875,7 @@ slider {
 
 
 
-@media only screen and (min-device-width: 300px) and (max-device-width: 667px) and (-webkit-min-device-pixel-ratio: 2) and (orientation: landscape) { 
+@media only screen and (min-device-width: 300px) and (max-device-width: 667px) and (-webkit-min-device-pixel-ratio: 2) and (min-aspect-ratio: 13/9) {
   tool-panel:not(.android) {
     display: none;
   }
@@ -947,23 +991,25 @@ utility-search .form-control {
 ::-webkit-scrollbar {
     width: 8px;
 }
- 
+
 /* Track */
 ::-webkit-scrollbar-track {
-    -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0); 
+    box-shadow: inset 0 0 6px rgba(0,0,0,0);
+    -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0);
     -webkit-border-radius: 10px;
     border-radius: 10px;
 }
- 
+
 /* Handle */
 ::-webkit-scrollbar-thumb {
     -webkit-border-radius: 10px;
     border-radius: 10px;
-    background: rgba(255,255,255,0.8); 
-    -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.5); 
+    background: rgba(255,255,255,0.8);
+    box-shadow: inset 0 0 6px rgba(0,0,0,0.5);
+    -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.5);
 }
 ::-webkit-scrollbar-thumb:window-inactive {
-  background: rgba(255,255,255,0.4); 
+  background: rgba(255,255,255,0.4);
 }
 
 
@@ -1010,6 +1056,9 @@ map-coordinates {
   bottom: .5em;
   left: 5px;
 }
+#map img {
+vertical-align: none;
+}
 /*map-coordinates .btn-default, .btn-default:active, .btn-default:focus {
    background-color: rgba(60,60,60,0.8)!important;
    border-color: white !important;
@@ -1021,3 +1070,18 @@ map-coordinates .btn-default:hover, .btn-default.active {
     border-color: white !important;
     color: white !important;
 }*/
+
+.basemap-label {
+    display: inline-block;
+    width: 70px;
+    vertical-align: middle;
+}
+
+base-map-panel label {
+  font-size: smaller;
+  font-weight: normal;
+}
+
+.text-muted{
+  color: white;
+}

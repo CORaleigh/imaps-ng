@@ -8,12 +8,22 @@ angular.module('imapsNgApp')
 			$scope.property = property;
 			$scope.searchValue = "";
 			var url = "https://maps.raleighnc.gov/arcgis/rest/services/Parcels/MapServer/exts/PropertySOE/AutoComplete";
+			var propertyService = "https://maps.raleighnc.gov/arcgis/rest/services/Property/Property/MapServer/";
+
 			var autocompleteFilter = function (response) {
 				var data = [];
-				if (response.Results.length > 0) {
-					angular.forEach(response.Results, function (r) {
-						data.push({value: r});
-					});
+				var field = '';
+				if (response.features) {
+					if (response.fields) {
+						if (response.fields.length > 0) {
+							field = response.fields[0].name;
+						}
+					}
+					if (response.features.length > 0) {
+						angular.forEach(response.features, function (r) {
+							data.push({value: r.attributes[field]});
+						});
+					}
 				}
 				return data;
 			};
@@ -111,7 +121,7 @@ angular.module('imapsNgApp')
 				}
 			});
 			$scope.$on('accountSelected', function (e, account) {
-				$location.search('pin', account.pin);
+				$location.search('pin', account.attributes.PIN_NUM);
 				$scope.tabChanged(false);
 				$rootScope.checked = true;
 				$scope.searchDir.open = true;
@@ -121,11 +131,15 @@ angular.module('imapsNgApp')
 			});
 			$rootScope.$on('accountUpdate', function (e, accounts) {
 				$rootScope.checked = true;
+				
+				if (!accounts) {
+					accounts = [];
+				}
 				if (accounts.length === 1) {
 					$scope.tab = $scope.tabs[1];
-					$scope.pin = accounts[0].pin;
+					$scope.pin= accounts[0].attributes.PIN_NUM;
 					$location.search('pin', $scope.pin);
-					$scope.reid = accounts[0].reid;
+					$scope.reid = accounts[0].attributes.REID;
 					$scope.account = accounts[0];
 					//$rootScope.$broadcast('pinUpdate', $scope.pin);
 						$timeout(function () {
@@ -134,22 +148,29 @@ angular.module('imapsNgApp')
 				} else if (accounts.length === 0) {
 					$scope.pin = null;
 					$location.search('pin', $scope.pin);
-				}
-				else {
+				} else {
 					$rootScope.account = null;
 					$rootScope.accountInfo = [];
 					$scope.tab = $scope.tabs[0];
 					$scope.tabChanged(true);
-				}
+				}						
 			});
 			var searchForRealEstate = function (type, values) {
 				$scope.property.getRealEstate(type, values).then(function (accounts) {
 					$scope.account = null;
+					if ($scope.selectionSingle) {
+						$scope.selectionSingle.clear();
+
+					}
+					if ($scope.selectionMultiple) {
+						$scope.selectionMultiple.clear();
+
+					}
 					//$scope.geometry = null;
-					$scope.fields = accounts.Fields;
-					$scope.accounts = accounts.Accounts;
+					$scope.fields = accounts.fields;
+					$scope.accounts = accounts.features;
 					$scope.$parent.account = null;
-					$scope.accountsSrc = accounts.Accounts;
+					$scope.accountsSrc = accounts.features;
 					$rootScope.zoomTo = true;
 					$rootScope.$broadcast('accountUpdate', $scope.accounts);
 				});
@@ -157,7 +178,24 @@ angular.module('imapsNgApp')
 			var valueSelected = function (a, b, c) {
 				$(".twitter-typeahead>input").blur();
 				c = ((c === 'streetname') ? 'street name':c);
-				searchForRealEstate(c, [b.value]);
+				if (c === 'address') {
+					$scope.property.getPinFromAddress(b.value).then(function (result) {
+						if (result.features) {
+							var pins = [];
+							result.features.forEach(function (feature) {
+								if (feature.attributes.PIN_NUM) {
+									pins.push(feature.attributes.PIN_NUM);
+								}
+							});
+							if (pins.length > 0) {
+								searchForRealEstate('pin', pins);
+							}
+						}
+					});
+				} else {
+					searchForRealEstate(c, [b.value.replace(/\'/g, "''")]);
+
+				}
 			}
 			var address = new Bloodhound({
 				datumTokenizer: function (datum) {
@@ -165,12 +203,12 @@ angular.module('imapsNgApp')
 			    },
 			    queryTokenizer: Bloodhound.tokenizers.whitespace,
 				remote: {
-					url: url + "?type=address&f=json",
+					url: propertyService + "4/query?f=json&returnDistinctValues=true&outFields=ADDRESS&orderByFields=ADDRESS&returnGeomtry=false%resultRecordCount=10",
 					filter: autocompleteFilter,
 					replace: function(url, uriEncodedQuery) {
-						  uriEncodedQuery = uriEncodedQuery.replace(/\'/g, "''").toUpperCase();
-					      var newUrl = url + '&input=' + uriEncodedQuery;
-					      return newUrl;
+						uriEncodedQuery = encodeURIComponent(uriEncodedQuery.replace(/\'/g, "")).toUpperCase().replace(/%20/g, '+');
+						var newUrl = url + "&where=ADDRESS like '" + uriEncodedQuery+"%'";//+"%' OR ADDRESS_NODIR like '" + uriEncodedQuery+"%'";
+						return newUrl;
 					}
 				}
 			});
@@ -180,12 +218,12 @@ angular.module('imapsNgApp')
 			    },
 			    queryTokenizer: Bloodhound.tokenizers.whitespace,
 				remote: {
-					url: url + "?type=owner&f=json",
+					url: propertyService + "1/query?f=json&returnDistinctValues=true&outFields=OWNER&orderByFields=OWNER&returnGeomtry=false%resultRecordCount=10",
 					filter: autocompleteFilter,
 					replace: function(url, uriEncodedQuery) {
-						  uriEncodedQuery = uriEncodedQuery.replace(/\'/g, "''").toUpperCase();
-					      var newUrl = url + '&input=' + uriEncodedQuery;
-					      return newUrl;
+						uriEncodedQuery = encodeURIComponent(uriEncodedQuery.replace(/\'/g, "''")).toUpperCase().replace(/%20/g, '+');
+						var newUrl = url + "&where=OWNER like '" + uriEncodedQuery+"%'";
+						return newUrl;
 					}
 				}
 			});
@@ -195,12 +233,12 @@ angular.module('imapsNgApp')
 			    },
 			    queryTokenizer: Bloodhound.tokenizers.whitespace,
 				remote: {
-					url: url + "?type=pin&f=json&limit=5",
+					url: propertyService + "1/query?f=json&returnDistinctValues=true&outFields=PIN_NUM&orderByFields=PIN_NUM&returnGeomtry=false%resultRecordCount=10",
 					filter: autocompleteFilter,
 					replace: function(url, uriEncodedQuery) {
-						  uriEncodedQuery = uriEncodedQuery.replace(/\'/g, "''").toUpperCase();
-					      var newUrl = url + '&input=' + uriEncodedQuery;
-					      return newUrl;
+						uriEncodedQuery = encodeURIComponent(uriEncodedQuery.replace(/\'/g, "")).toUpperCase().replace(/%20/g, '+');
+						var newUrl = url + "&where=PIN_NUM like '" + uriEncodedQuery+"%'";
+						return newUrl;
 					}
 				}
 			});
@@ -210,11 +248,11 @@ angular.module('imapsNgApp')
 			    },
 			    queryTokenizer: Bloodhound.tokenizers.whitespace,
 				remote: {
-					url: url + "?type=reid&f=json&limit=5",
+					url: propertyService + "1/query?f=json&returnDistinctValues=true&outFields=REID&orderByFields=REID&returnGeomtry=false%resultRecordCount=10",
 					filter: autocompleteFilter,
 					replace: function(url, uriEncodedQuery) {
-						  uriEncodedQuery = uriEncodedQuery.replace(/\'/g, "''").toUpperCase();
-					      var newUrl = url + '&input=' + uriEncodedQuery;
+						  uriEncodedQuery = encodeURIComponent(uriEncodedQuery.replace(/\'/g, "")).toUpperCase().replace(/%20/g, '+');
+					      var newUrl = url + "&where=REID like '" + uriEncodedQuery+"%'";
 					      return newUrl;
 					}
 				}
@@ -225,11 +263,12 @@ angular.module('imapsNgApp')
 			    },
 			    queryTokenizer: Bloodhound.tokenizers.whitespace,
 				remote: {
-					url: url + "?type=street name&f=json&limit=5",
+					url: propertyService + "4/query?f=json&returnDistinctValues=true&outFields=STREET&orderByFields=STREET&returnGeomtry=false%resultRecordCount=10",
 					filter: autocompleteFilter,
 					replace: function(url, uriEncodedQuery) {
-						  uriEncodedQuery = uriEncodedQuery.replace(/\'/g, "''").toUpperCase();
-					      var newUrl = url + '&input=%25' + uriEncodedQuery;
+						  uriEncodedQuery = encodeURIComponent(uriEncodedQuery.replace(/\'/g, "")).toUpperCase().replace(/%20/g, '+');
+
+					      var newUrl = url + "&where=STREET like '" + uriEncodedQuery+"%'";//+"%' OR STREET_NODIR like '" + uriEncodedQuery+"%'";
 					      return newUrl;
 					}
 				}
@@ -318,17 +357,17 @@ angular.module('imapsNgApp')
 						case "Info":
 						break;
 						case "Photos":
-							$scope.property.getPhotos($scope.account.reid).then(function (photos) {
-								$scope.photos = photos.Photos;
+							$scope.property.getPhotos($scope.account.attributes.REID).then(function (photos) {
+								$scope.photos = photos.features;
 							});
 						break;
 						case "Deeds":
-							$scope.property.getDeeds($scope.account.reid).then(function (deeds) {
-								$scope.deeds = deeds.Deeds;
+							$scope.property.getDeeds($scope.account.attributes.REID).then(function (deeds) {
+								$scope.deeds = deeds.features;
 								$scope.plats = [];
-								angular.forEach($scope.deeds, function (deed) {
-									if (deed.bomDocNum) {
-										if (deed.bomDocNum != "0") {
+								angular.forEach(deeds.features, function (deed) {
+									if (deed.attributes.BOM_DOC_NUM) {
+										if (deed.attributes.BOM_DOC_NUM != "0") {
 											$scope.plats.push(deed);
 										}
 									}
@@ -336,15 +375,24 @@ angular.module('imapsNgApp')
 							});
 						break;
 						case "Tax Info":
-							window.open("http://services.wakegov.com/realestate/Account.asp?id=" + $scope.account.reid, "_blank");
+							window.open("http://services.wakegov.com/realestate/Account.asp?id=" + $scope.account.attributes.REID, "_blank");
 						break;
 						case "Services":
 							$scope.$broadcast('servicesClicked', $scope.geometry);
 						break;
 						case "Addresses":
-							$scope.property.getAddresses($scope.account.pin, $scope.account.reid).then(function (addresses) {
-								$scope.addresses = addresses.Addresses;
-							});
+							if ($scope.account.attributes.PLANNING_JURISDICTION === 'RA'){
+								$scope.property.getAddresses($scope.account.attributes.PIN_NUM, $scope.account.attributes.REID, true).then(function (addresses) {
+									$scope.addresses = addresses.features;
+									
+								});
+							} else {
+								$scope.property.getAddresses($scope.account.attributes.PIN_NUM, $scope.account.attributes.REID, false).then(function (addresses) {
+									$scope.addresses = addresses.features;
+									
+								});
+							}
+
 						break;
 					}
 				}

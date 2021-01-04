@@ -12,8 +12,9 @@ angular.module('imapsNgApp').factory('locationFactory', ['$http', '$q', function
 			params: {
 				where: "NAME LIKE '" + subdivision.toUpperCase() + "%'",
 				orderByFields: 'NAME',
-				outFields: 'NAME',
+				outFields: '*',
 				returnGeometry: true,
+				geometryPrecision: 0,
 				f: "json"
 			}		
 		}).success(deferred.resolve);
@@ -25,10 +26,11 @@ angular.module('imapsNgApp').factory('locationFactory', ['$http', '$q', function
 			method: 'GET',
 			url: 'https://maps.raleighnc.gov/arcgis/rest/services/StreetsDissolved/MapServer/0/query',
 			params: {
-				where: "CARTONAME LIKE '%" + street.toUpperCase() + "%'",
+				where: "UPPER(CARTONAME) LIKE '%" + street.toUpperCase() + "%'",
 				orderByFields: 'CARTONAME',
 				outFields: 'CARTONAME',
 				returnGeometry: true,
+				geometryPrecision: 0,
 				f: "json"
 			}		
 		}).success(deferred.resolve);
@@ -45,6 +47,7 @@ angular.module('imapsNgApp').factory('locationFactory', ['$http', '$q', function
 				returnGeometry: false,
 				outFields: 'CARTONAME',
 				orderByFields: 'CARTONAME',
+				geometryPrecision: 0,
 				f: "json"
 			}),
         	headers: {'Content-Type': 'application/x-www-form-urlencoded'}
@@ -68,7 +71,7 @@ angular.module('imapsNgApp').factory('locationFactory', ['$http', '$q', function
 		var deferred = $q.defer();
 		$http({
 			method: 'GET',
-			url: 'https://maps.raleighnc.gov/arcgis/rest/services/POI1/MapServer/0/query',
+			url: 'https://services.arcgis.com/v400IkDOw1ad7Yad/arcgis/rest/services/Places_Of_Interest/FeatureServer/0/query',
 			params: {
 				where: '1=1',
 				outFields: 'ICON',
@@ -84,7 +87,7 @@ angular.module('imapsNgApp').factory('locationFactory', ['$http', '$q', function
 		var deferred = $q.defer();
 		$http({
 			method: 'GET',
-			url: 'https://maps.raleighnc.gov/arcgis/rest/services/POI1/MapServer/0/query',
+			url: 'https://services.arcgis.com/v400IkDOw1ad7Yad/arcgis/rest/services/Places_Of_Interest/FeatureServer/0/query',
 			params: {
 				where: "ICON = '" + type + "'",
 				outFields: '*',

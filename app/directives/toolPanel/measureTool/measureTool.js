@@ -12,7 +12,8 @@ angular.module('imapsNgApp')
 				clickHandle = null,
 				moveHandle = null,
 				coordHandle = null,
-				current = null;
+				current = null,
+				mouseDown = null;
 			$scope.measurement = '--';
 			$scope.currentCoords = '';
 
@@ -20,7 +21,7 @@ angular.module('imapsNgApp')
 				var dd = spToDd(x, y),
 					text = "";
 				if (unit === 'FEET') {
-					text = y.toFixed(4) + " N " + x.toFixed(4) + " E";
+					text = y.toFixed(2) + " N " + x.toFixed(2) + " E";
 				} else if (unit === 'DECIMAL_DEGREES') {
 					text = "Lat: " + dd[0].toFixed(6) + " Lng: " + dd[1].toFixed(6);
 				} else if (unit === 'DEGREE_MINUTE_SECONDS') {
@@ -66,9 +67,18 @@ angular.module('imapsNgApp')
 					}
 					gl.clear();
 					gl.add(g);
+					mouseDown = $scope.map.on('mouse-down', drawStarted);
 				});
 
+
 			};
+
+			var drawStarted = function () {
+				if (gl.graphics.length > 0) {
+					gl.remove(gl.graphics[0]);
+				}
+				mouseDown.remove();
+			}
 
 			var stopLengthMeasure = function () {
 				if (moveHandle) {

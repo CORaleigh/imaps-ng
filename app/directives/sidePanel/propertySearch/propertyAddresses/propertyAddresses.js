@@ -5,23 +5,24 @@ angular.module('imapsNgApp')
 		restrict: 'E',
 		controller: function ($scope) {
 			$scope.rpid = null;
+			$scope.addressExports = [];
 			$scope.raleighCols = [
 			  		{
-			  			field: 'address',
+			  			field: 'attributes.ADDRESS',
 			  			displayName: 'Address'
 			  		},
 			  		{
-			  			field: 'type',
+			  			field: 'attributes.TYPE',
 			  			displayName: 'Type'
 			  		},
 			  		{
-			  			field: 'status',
+			  			field: 'attributes.STATUS',
 			  			displayName: 'Status'
 			  		}
 			  	];
 			$scope.wakeCols = [
 		  		{
-		  			field: 'address',
+		  			field: 'attributes.ADDRESS',
 		  			displayName: 'Address'
 		  		}
 			]
@@ -38,15 +39,25 @@ angular.module('imapsNgApp')
 				if (addresses) {
 					if (addresses.length > 0) {
 						$scope.addrGrid.data = addresses;
-						if (addresses[0].rpidMap) {
+						if (addresses[0].attributes.TYPE) {
 							$scope.addrGrid.columnDefs = $scope.raleighCols;
-							$scope.rpid = addresses[0].rpidMap + ' ' + addresses[0].rpidLot;
+							$scope.rpid = addresses[0].attributes.RPID_MAP + ' ' + addresses[0].attributes.RPID_LOT; 
 							angular.forEach(addresses, function (a) {
-								if (a.suite.trim().length > 0) {
-									a.address += ', STE ' + a.suite;
+								if (a.attributes.SUITE.trim().length > 0) {
+									a.attributes.ADDRESS += ', STE ' + a.attributes.SUITE;
 								}
+							});							
+							$scope.addressExports = [{'ADDRESS': 'Address', 'TYPE': 'Type', 'STATUS': 'Status'}];
+							addresses.forEach(function (address) {
+								$scope.addressExports.push({'ADDRESS': address.attributes.ADDRESS, 'TYPE': address.attributes.TYPE, 'STATUS': address.attributes.STATUS});
 							});
+
 						} else {
+							$scope.addressExports = [{'ADDRESS': 'Address'}];
+
+							addresses.forEach(function (address) {
+								$scope.addressExports.push({'ADDRESS': address.attributes.ADDRESS});
+							});
 							$scope.addrGrid.columnDefs = $scope.wakeCols;
 							$scope.rpid = null;
 						}
